@@ -79,18 +79,18 @@ async def setup_railway_database():
             result = connection.execute(text("SELECT COUNT(*) FROM pedidos WHERE id = 1"))
             if result.fetchone()[0] == 0:
                 connection.execute(text("""
-                    INSERT INTO pedidos (id, numero_pedido, fecha_pedido, tipo, total, 
+                    INSERT INTO pedidos (id, gescom_pedido_id, numero_pedido, fecha_pedido, tipo, total, 
                                        estado, mayorista_id)
-                    VALUES (1, 'ORD-20250702-SIM-141550', '2025-07-02', 'ORIGINAL', 590.0, 
+                    VALUES (1, 'SIM-141550', 'ORD-20250702-SIM-141550', '2025-07-02', 'ORIGINAL', 590.0, 
                             'COMPLETADO', 4)
                 """))
             
             result = connection.execute(text("SELECT COUNT(*) FROM pedidos WHERE id = 2"))
             if result.fetchone()[0] == 0:
                 connection.execute(text("""
-                    INSERT INTO pedidos (id, numero_pedido, fecha_pedido, tipo, total, 
+                    INSERT INTO pedidos (id, gescom_pedido_id, numero_pedido, fecha_pedido, tipo, total, 
                                        estado, codigo_referencia, pedido_original_id, mayorista_id)
-                    VALUES (2, 'ORD-20250702-SIM-141551', '2025-07-02', 'UPSELL', 360.0, 
+                    VALUES (2, 'SIM-141551', 'ORD-20250702-SIM-141551', '2025-07-02', 'UPSELL', 360.0, 
                             'COMPLETADO', 'UP-001-ORD-20250702-SIM-141550', 1, 4)
                 """))
             
