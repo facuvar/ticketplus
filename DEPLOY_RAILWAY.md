@@ -38,17 +38,32 @@ WHATSAPP_API_KEY=tu-api-key-whatsapp
 WHATSAPP_PHONE_NUMBER=tu-numero-whatsapp
 ```
 
-## 📦 Paso 4: Importar Datos
+## 📦 Paso 4: Configurar Base de Datos
 
-### Usando Railway CLI:
+### **Método Automático (Recomendado):**
+Después del deploy, ejecutar desde Railway Console:
+
+```bash
+# En Railway Dashboard → Tu App → Console
+python setup_db.py
+```
+
+Este script configurará automáticamente:
+- ✅ Estructura de todas las tablas
+- ✅ Mayorista de ejemplo (Distribuidora Simón)
+- ✅ Productos de ejemplo (Coca, Pepsi, Agua, etc.)
+- ✅ Pedidos ORIGINAL y UPSELL
+- ✅ Sistema de códigos únicos funcionando
+
+### **Método Manual (Alternativo):**
+Si tienes Railway CLI instalado:
+
 ```bash
 # Conectar a tu proyecto
 railway connect
 
-# Subir archivos de export (desde carpeta exports/)
-# Ejecutar en el shell de Railway:
-mysql -h $MYSQLHOST -P $MYSQLPORT -u $MYSQLUSER -p$MYSQLPASSWORD $MYSQLDATABASE < ticketplus_structure_TIMESTAMP.sql
-mysql -h $MYSQLHOST -P $MYSQLPORT -u $MYSQLUSER -p$MYSQLPASSWORD $MYSQLDATABASE < ticketplus_data_TIMESTAMP.sql
+# Ejecutar configuración
+railway run python setup_db.py
 ```
 
 ## 🎯 Paso 5: Verificar Deploy
