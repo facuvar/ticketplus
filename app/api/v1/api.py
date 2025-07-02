@@ -51,6 +51,16 @@ async def setup_railway_database():
                             '{"factores": ["historial", "popularidad", "margen"]}', true)
                 """))
             
+            # Cliente ejemplo
+            result = connection.execute(text("SELECT COUNT(*) FROM clientes WHERE id = 1"))
+            if result.fetchone()[0] == 0:
+                connection.execute(text("""
+                    INSERT INTO clientes (id, gescom_cliente_id, nombre, email, telefono, 
+                                        mayorista_id, whatsapp_numero, acepta_whatsapp, activo)
+                    VALUES (1, 'CLI-001', 'Cliente Ejemplo', 'cliente@ejemplo.com', '+5491234567890',
+                            4, '5491234567890', true, true)
+                """))
+            
             # Productos ejemplo
             productos = [
                 (1, 'COCA-350', 'COCA-350', 'Coca Cola 350ml', 200.0, 100, 'Bebidas'),
@@ -80,18 +90,18 @@ async def setup_railway_database():
             if result.fetchone()[0] == 0:
                 connection.execute(text("""
                     INSERT INTO pedidos (id, gescom_pedido_id, numero_pedido, fecha_pedido, tipo, total, 
-                                       estado, mayorista_id)
+                                       estado, cliente_id, mayorista_id)
                     VALUES (1, 'SIM-141550', 'ORD-20250702-SIM-141550', '2025-07-02', 'ORIGINAL', 590.0, 
-                            'COMPLETADO', 4)
+                            'COMPLETADO', 1, 4)
                 """))
             
             result = connection.execute(text("SELECT COUNT(*) FROM pedidos WHERE id = 2"))
             if result.fetchone()[0] == 0:
                 connection.execute(text("""
                     INSERT INTO pedidos (id, gescom_pedido_id, numero_pedido, fecha_pedido, tipo, total, 
-                                       estado, codigo_referencia, pedido_original_id, mayorista_id)
+                                       estado, codigo_referencia, pedido_original_id, cliente_id, mayorista_id)
                     VALUES (2, 'SIM-141551', 'ORD-20250702-SIM-141551', '2025-07-02', 'UPSELL', 360.0, 
-                            'COMPLETADO', 'UP-001-ORD-20250702-SIM-141550', 1, 4)
+                            'COMPLETADO', 'UP-001-ORD-20250702-SIM-141550', 1, 1, 4)
                 """))
             
             # Items de pedidos
