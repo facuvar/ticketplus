@@ -36,17 +36,20 @@ async def setup_railway_database():
         from app.core.database import Base
         Base.metadata.create_all(bind=engine)
         
-        # Insertar datos básicos
+        # Insertar datos básicos usando sintaxis compatible
         with engine.connect() as connection:
-            # Mayorista ejemplo
-            connection.execute(text("""
-                INSERT IGNORE INTO mayoristas (id, nombre, email, telefono, whatsapp_phone_number, 
-                                              recomendaciones_activas, tiempo_espera_horas, 
-                                              max_productos_recomendados, reglas_recomendacion, activo)
-                VALUES (4, 'Distribuidora Simón', 'simon@distribuidora.com', '+5491123456789', 
-                        '5491123456789', true, 24, 3, 
-                        '{"factores": ["historial", "popularidad", "margen"]}', true)
-            """))
+            # Verificar si el mayorista ya existe
+            result = connection.execute(text("SELECT COUNT(*) FROM mayoristas WHERE id = 4"))
+            if result.fetchone()[0] == 0:
+                # Mayorista ejemplo
+                connection.execute(text("""
+                    INSERT INTO mayoristas (id, nombre, email, telefono, whatsapp_phone_number, 
+                                          recomendaciones_activas, tiempo_espera_horas, 
+                                          max_productos_recomendados, reglas_recomendacion, activo)
+                    VALUES (4, 'Distribuidora Simón', 'simon@distribuidora.com', '+5491123456789', 
+                            '5491123456789', true, 24, 3, 
+                            '{"factores": ["historial", "popularidad", "margen"]}', true)
+                """))
             
             # Productos ejemplo
             productos = [
@@ -58,31 +61,38 @@ async def setup_railway_database():
             ]
             
             for producto in productos:
-                connection.execute(text("""
-                    INSERT IGNORE INTO productos (id, codigo, nombre, precio_compra, precio_venta, 
-                                                 stock, categoria, mayorista_id, activo)
-                    VALUES (:id, :codigo, :nombre, :precio_compra, :precio_venta, 
-                            :stock, :categoria, 4, true)
-                """), {
-                    'id': producto[0], 'codigo': producto[1], 'nombre': producto[2],
-                    'precio_compra': producto[3], 'precio_venta': producto[4],
-                    'stock': producto[5], 'categoria': producto[6]
-                })
+                # Verificar si el producto ya existe
+                result = connection.execute(text("SELECT COUNT(*) FROM productos WHERE id = :id"), {'id': producto[0]})
+                if result.fetchone()[0] == 0:
+                    connection.execute(text("""
+                        INSERT INTO productos (id, codigo, nombre, precio_compra, precio_venta, 
+                                             stock, categoria, mayorista_id, activo)
+                        VALUES (:id, :codigo, :nombre, :precio_compra, :precio_venta, 
+                                :stock, :categoria, 4, true)
+                    """), {
+                        'id': producto[0], 'codigo': producto[1], 'nombre': producto[2],
+                        'precio_compra': producto[3], 'precio_venta': producto[4],
+                        'stock': producto[5], 'categoria': producto[6]
+                    })
             
             # Pedidos ejemplo con UPSELL
-            connection.execute(text("""
-                INSERT IGNORE INTO pedidos (id, numero_pedido, fecha_pedido, tipo, total, 
-                                           estado, mayorista_id)
-                VALUES (1, 'ORD-20250702-SIM-141550', '2025-07-02', 'ORIGINAL', 2500.0, 
-                        'COMPLETADO', 4)
-            """))
+            result = connection.execute(text("SELECT COUNT(*) FROM pedidos WHERE id = 1"))
+            if result.fetchone()[0] == 0:
+                connection.execute(text("""
+                    INSERT INTO pedidos (id, numero_pedido, fecha_pedido, tipo, total, 
+                                       estado, mayorista_id)
+                    VALUES (1, 'ORD-20250702-SIM-141550', '2025-07-02', 'ORIGINAL', 2500.0, 
+                            'COMPLETADO', 4)
+                """))
             
-            connection.execute(text("""
-                INSERT IGNORE INTO pedidos (id, numero_pedido, fecha_pedido, tipo, total, 
-                                           estado, codigo_referencia, pedido_original_id, mayorista_id)
-                VALUES (2, 'ORD-20250702-SIM-141551', '2025-07-02', 'UPSELL', 850.0, 
-                        'COMPLETADO', 'UP-001-ORD-20250702-SIM-141550', 1, 4)
-            """))
+            result = connection.execute(text("SELECT COUNT(*) FROM pedidos WHERE id = 2"))
+            if result.fetchone()[0] == 0:
+                connection.execute(text("""
+                    INSERT INTO pedidos (id, numero_pedido, fecha_pedido, tipo, total, 
+                                       estado, codigo_referencia, pedido_original_id, mayorista_id)
+                    VALUES (2, 'ORD-20250702-SIM-141551', '2025-07-02', 'UPSELL', 850.0, 
+                            'COMPLETADO', 'UP-001-ORD-20250702-SIM-141550', 1, 4)
+                """))
             
             # Items de pedidos
             items_pedidos = [
@@ -92,21 +102,25 @@ async def setup_railway_database():
             ]
             
             for item in items_pedidos:
-                connection.execute(text("""
-                    INSERT IGNORE INTO items_pedido (id, pedido_id, producto_id, cantidad, precio_unitario)
-                    VALUES (:id, :pedido_id, :producto_id, :cantidad, :precio_unitario)
-                """), {
-                    'id': item[0], 'pedido_id': item[1], 'producto_id': item[2],
-                    'cantidad': item[3], 'precio_unitario': item[4]
-                })
+                result = connection.execute(text("SELECT COUNT(*) FROM items_pedido WHERE id = :id"), {'id': item[0]})
+                if result.fetchone()[0] == 0:
+                    connection.execute(text("""
+                        INSERT INTO items_pedido (id, pedido_id, producto_id, cantidad, precio_unitario)
+                        VALUES (:id, :pedido_id, :producto_id, :cantidad, :precio_unitario)
+                    """), {
+                        'id': item[0], 'pedido_id': item[1], 'producto_id': item[2],
+                        'cantidad': item[3], 'precio_unitario': item[4]
+                    })
             
             # Recomendaciones de ejemplo
-            connection.execute(text("""
-                INSERT IGNORE INTO recomendaciones (id, mayorista_id, cliente_id, producto_nombre, 
-                                                   motivo, confianza, fecha_generacion, fue_clickeada)
-                VALUES (1, 4, 'CLI-001', 'Coca Cola 350ml', 
-                        'Producto popular en tu categoría', 85.5, '2025-07-02', true)
-            """))
+            result = connection.execute(text("SELECT COUNT(*) FROM recomendaciones WHERE id = 1"))
+            if result.fetchone()[0] == 0:
+                connection.execute(text("""
+                    INSERT INTO recomendaciones (id, mayorista_id, cliente_id, producto_nombre, 
+                                               motivo, confianza, fecha_generacion, fue_clickeada)
+                    VALUES (1, 4, 'CLI-001', 'Coca Cola 350ml', 
+                            'Producto popular en tu categoría', 85.5, '2025-07-02', true)
+                """))
             
             connection.commit()
         
