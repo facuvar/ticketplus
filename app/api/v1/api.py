@@ -284,4 +284,37 @@ async def debug_dashboard_endpoints(mayorista_id: int):
         "mayorista_id": mayorista_id,
         "tests": resultados,
         "mensaje": "🔍 Diagnóstico completo de endpoints del dashboard"
-    } 
+    }
+
+# Endpoint de test súper simple
+@api_router.get("/test-simple")
+async def test_simple():
+    """Test básico para verificar si la API funciona"""
+    try:
+        from app.core.database import SessionLocal
+        from sqlalchemy import text
+        
+        db = SessionLocal()
+        try:
+            # Test básico de conexión
+            result = db.execute(text("SELECT 1")).fetchone()
+            tables_result = db.execute(text("SELECT name FROM sqlite_master WHERE type='table'")).fetchall()
+            tables = [row[0] for row in tables_result]
+            
+            return {
+                "status": "OK",
+                "database_connection": "✅ Conectado",
+                "test_query": f"✅ Resultado: {result[0]}",
+                "tables": tables,
+                "tabla_count": len(tables)
+            }
+        finally:
+            db.close()
+            
+    except Exception as e:
+        import traceback
+        return {
+            "status": "ERROR",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        } 
