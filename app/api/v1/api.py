@@ -126,15 +126,28 @@ async def setup_railway_database():
                         'producto_codigo': item[6], 'producto_nombre': item[7]
                     })
             
-            # Recomendaciones de ejemplo
-            result = connection.execute(text("SELECT COUNT(*) FROM recomendaciones WHERE id = 1"))
-            if result.fetchone()[0] == 0:
-                connection.execute(text("""
-                    INSERT INTO recomendaciones (id, mayorista_id, cliente_id, producto_nombre, 
-                                               motivo, confianza, fecha_generacion, fue_clickeada)
-                    VALUES (1, 4, 'CLI-001', 'Coca Cola 350ml', 
-                            'Producto popular en tu categoría', 85.5, '2025-07-02', true)
-                """))
+            # Recomendaciones ejemplo
+            recomendaciones = [
+                (1, 1, 1, 4, 'MAS_VENDIDOS', 85.5, 'Producto popular en tu categoría', 'Coca Cola 350ml', 200.0),
+                (2, 1, 2, 4, 'CATEGORIA_SIMILAR', 75.0, 'Bebida complementaria', 'Pepsi Cola 350ml', 190.0),
+                (3, 2, 3, 4, 'HISTORICO_CLIENTE', 90.0, 'Te gusta esta categoría', 'Agua Mineral 500ml', 120.0),
+            ]
+            
+            for rec in recomendaciones:
+                result = connection.execute(text("SELECT COUNT(*) FROM recomendaciones WHERE id = :id"), {'id': rec[0]})
+                if result.fetchone()[0] == 0:
+                    connection.execute(text("""
+                        INSERT INTO recomendaciones (id, pedido_id, producto_id, mayorista_id, tipo, 
+                                                   score, razon, producto_nombre, producto_precio, 
+                                                   fue_clickeada, fecha_generacion)
+                        VALUES (:id, :pedido_id, :producto_id, :mayorista_id, :tipo, 
+                                :score, :razon, :producto_nombre, :producto_precio,
+                                true, '2025-07-02 16:00:00')
+                    """), {
+                        'id': rec[0], 'pedido_id': rec[1], 'producto_id': rec[2], 'mayorista_id': rec[3],
+                        'tipo': rec[4], 'score': rec[5], 'razon': rec[6], 'producto_nombre': rec[7], 
+                        'producto_precio': rec[8]
+                    })
             
             connection.commit()
         
