@@ -254,74 +254,87 @@ async def obtener_pedidos(
         
         pedidos_data = []
         for pedido in pedidos:
-            # Obtener cliente
-            cliente = db.query(Cliente).filter(Cliente.id == pedido.cliente_id).first()
+            # Obtener cliente de forma segura
+            cliente_nombre = "Cliente desconocido"
+            try:
+                cliente = db.query(Cliente).filter(Cliente.id == pedido.cliente_id).first()
+                if cliente:
+                    cliente_nombre = cliente.nombre
+            except:
+                pass
             
-            # Contar items
-            items_count = db.query(func.count(ItemPedido.id)).filter(
-                ItemPedido.pedido_id == pedido.id
-            ).scalar() or 0
+            # Contar items de forma segura
+            items_count = 0
+            try:
+                items_count = db.query(func.count(ItemPedido.id)).filter(
+                    ItemPedido.pedido_id == pedido.id
+                ).scalar() or 0
+            except:
+                pass
             
-            # Información de referencia UPSELL
-            referencia_info = {}
-            if pedido.tipo.value == "upsell" and pedido.pedido_original_id:
-                # Es un UPSELL, mostrar referencia al original
-                referencia_info = {
-                    "es_upsell": True,
-                    "pedido_original_id": pedido.pedido_original_id,
-                    "codigo_referencia": pedido.codigo_referencia,
-                    "icono": "🎯"
-                }
-            elif pedido.tipo.value == "original":
-                # Es ORIGINAL, contar UPSELLs asociados
-                count_upsells = db.query(func.count(Pedido.id)).filter(
-                    Pedido.pedido_original_id == pedido.id
-                ).scalar() or 0
-                
-                total_upsells = db.query(func.sum(Pedido.total)).filter(
-                    Pedido.pedido_original_id == pedido.id
-                ).scalar() or 0
-                
-                referencia_info = {
-                    "es_original": True,
-                    "count_upsells": count_upsells,
-                    "total_upsells": float(total_upsells) if total_upsells else 0,
-                    "icono": "📦" if count_upsells == 0 else f"📦+{count_upsells}🎯"
-                }
+            # Información de referencia UPSELL simplificada
+            referencia_info = {"icono": "📦"}
+            try:
+                if pedido.tipo and pedido.tipo.value == "upsell" and pedido.pedido_original_id:
+                    referencia_info = {
+                        "es_upsell": True,
+                        "pedido_original_id": pedido.pedido_original_id,
+                        "codigo_referencia": pedido.codigo_referencia or "",
+                        "icono": "🎯"
+                    }
+                elif pedido.tipo and pedido.tipo.value == "original":
+                    count_upsells = db.query(func.count(Pedido.id)).filter(
+                        Pedido.pedido_original_id == pedido.id
+                    ).scalar() or 0
+                    
+                    referencia_info = {
+                        "es_original": True,
+                        "count_upsells": count_upsells,
+                        "icono": "📦" if count_upsells == 0 else f"📦+{count_upsells}🎯"
+                    }
+            except:
+                pass
 
             pedidos_data.append({
                 "id": pedido.id,
-                "numero_pedido": pedido.numero_pedido,
+                "numero_pedido": pedido.numero_pedido or "Sin número",
                 "cliente": {
-                    "id": cliente.id if cliente else None,
-                    "nombre": cliente.nombre if cliente else "Cliente desconocido"
+                    "id": pedido.cliente_id,
+                    "nombre": cliente_nombre
                 },
-                "tipo": pedido.tipo.value,
-                "estado": pedido.estado.value,
-                "total": float(pedido.total),
+                "tipo": pedido.tipo.value if pedido.tipo else "original",
+                "estado": pedido.estado.value if pedido.estado else "pendiente",
+                "total": float(pedido.total) if pedido.total else 0.0,
                 "items_count": items_count,
-                "fecha_pedido": pedido.fecha_pedido.isoformat(),
-                "recomendaciones_enviadas": pedido.recomendaciones_enviadas,
+                "fecha_pedido": pedido.fecha_pedido.isoformat() if pedido.fecha_pedido else None,
+                "recomendaciones_enviadas": pedido.recomendaciones_enviadas or False,
                 "referencia": referencia_info
             })
         
-        # Estadísticas de pedidos
+        # Estadísticas simplificadas
         total_pedidos = db.query(func.count(Pedido.id)).filter(
             Pedido.mayorista_id == mayorista_id
         ).scalar() or 0
         
-        # Estadísticas de UPSELL
-        total_originales = db.query(func.count(Pedido.id)).filter(
-            and_(Pedido.mayorista_id == mayorista_id, Pedido.tipo == "original")
-        ).scalar() or 0
+        # Estadísticas básicas por estado
+        pendientes = 0
+        procesando = 0
+        entregados = 0
         
-        total_upsells = db.query(func.count(Pedido.id)).filter(
-            and_(Pedido.mayorista_id == mayorista_id, Pedido.tipo == "upsell")
-        ).scalar() or 0
-        
-        ingresos_upsells = db.query(func.sum(Pedido.total)).filter(
-            and_(Pedido.mayorista_id == mayorista_id, Pedido.tipo == "upsell")
-        ).scalar() or 0
+        try:
+            pendientes = db.query(func.count(Pedido.id)).filter(
+                and_(Pedido.mayorista_id == mayorista_id, Pedido.estado == "pendiente")
+            ).scalar() or 0
+            
+            procesando = db.query(func.count(Pedido.id)).filter(
+                and_(Pedido.mayorista_id == mayorista_id, Pedido.estado == "procesando")
+            ).scalar() or 0
+            
+            entregados = db.query(func.count(Pedido.id)).filter(
+                and_(Pedido.mayorista_id == mayorista_id, Pedido.estado == "entregado")
+            ).scalar() or 0
+        except:
+            pass
 
         return {
             "pedidos": pedidos_data,
@@ -329,19 +342,9 @@ async def obtener_pedidos(
             "pagina": skip // limit + 1,
             "limite": limit,
             "estadisticas": {
-                "pendientes": db.query(func.count(Pedido.id)).filter(
-                    and_(Pedido.mayorista_id == mayorista_id, Pedido.estado == "pendiente")
-                ).scalar() or 0,
-                "procesando": db.query(func.count(Pedido.id)).filter(
-                    and_(Pedido.mayorista_id == mayorista_id, Pedido.estado == "procesando")
-                ).scalar() or 0,
-                "entregados": db.query(func.count(Pedido.id)).filter(
-                    and_(Pedido.mayorista_id == mayorista_id, Pedido.estado == "entregado")
-                ).scalar() or 0,
-                "originales": total_originales,
-                "upsells": total_upsells,
-                "ingresos_upsells": float(ingresos_upsells),
-                "conversion_upsell": round((total_upsells / total_originales * 100) if total_originales > 0 else 0, 2)
+                "pendientes": pendientes,
+                "procesando": procesando,
+                "entregados": entregados
             }
         }
         
@@ -364,30 +367,39 @@ async def obtener_recomendaciones(
         
         recomendaciones_data = []
         for rec in recomendaciones:
-            # Obtener pedido relacionado
-            pedido = db.query(Pedido).filter(Pedido.id == rec.pedido_id).first()
-            cliente = None
-            if pedido:
-                cliente = db.query(Cliente).filter(Cliente.id == pedido.cliente_id).first()
+            # Obtener pedido relacionado de forma segura
+            pedido = None
+            cliente_nombre = "Desconocido"
+            pedido_numero = "N/A"
+            
+            try:
+                pedido = db.query(Pedido).filter(Pedido.id == rec.pedido_id).first()
+                if pedido:
+                    pedido_numero = pedido.numero_pedido
+                    cliente = db.query(Cliente).filter(Cliente.id == pedido.cliente_id).first()
+                    if cliente:
+                        cliente_nombre = cliente.nombre
+            except:
+                pass  # Si hay error, usar valores por defecto
             
             recomendaciones_data.append({
                 "id": rec.id,
-                "producto_nombre": rec.producto_nombre,
-                "precio": float(rec.producto_precio),
-                "tipo": rec.tipo.value,
-                "estado": rec.estado.value,
-                "score": rec.score,
-                "razon": rec.razon,
-                "fue_clickeada": rec.fue_clickeada,
-                "fecha_generacion": rec.fecha_generacion.isoformat(),
+                "producto_nombre": rec.producto_nombre or "Producto sin nombre",
+                "precio": float(rec.producto_precio) if rec.producto_precio else 0.0,
+                "tipo": rec.tipo.value if rec.tipo else "desconocido",
+                "estado": rec.estado.value if rec.estado else "generada",
+                "score": float(rec.score) if rec.score else 0.0,
+                "razon": rec.razon or "Sin razón especificada",
+                "fue_clickeada": rec.fue_clickeada or False,
+                "fecha_generacion": rec.fecha_generacion.isoformat() if rec.fecha_generacion else None,
                 "fecha_click": rec.fecha_click.isoformat() if rec.fecha_click else None,
                 "pedido": {
-                    "numero": pedido.numero_pedido if pedido else None,
-                    "cliente": cliente.nombre if cliente else "Desconocido"
+                    "numero": pedido_numero,
+                    "cliente": cliente_nombre
                 }
             })
         
-        # Estadísticas
+        # Estadísticas simplificadas
         total_recomendaciones = db.query(func.count(Recomendacion.id)).filter(
             Recomendacion.mayorista_id == mayorista_id
         ).scalar() or 0
@@ -399,13 +411,13 @@ async def obtener_recomendaciones(
             )
         ).scalar() or 0
         
+        conversion_rate = round((clickeadas / total_recomendaciones * 100) if total_recomendaciones > 0 else 0, 2)
+        
         return {
             "recomendaciones": recomendaciones_data,
             "total": total_recomendaciones,
             "clickeadas": clickeadas,
-            "conversion_rate": round((clickeadas / total_recomendaciones * 100) if total_recomendaciones > 0 else 0, 2),
-            "pagina": skip // limit + 1,
-            "limite": limit
+            "conversion_rate": conversion_rate
         }
         
     except Exception as e:
@@ -481,41 +493,54 @@ async def obtener_clientes(
         
         clientes_data = []
         for cliente in clientes:
-            # Contar pedidos del cliente
-            total_pedidos = db.query(func.count(Pedido.id)).filter(
-                Pedido.cliente_id == cliente.id
-            ).scalar() or 0
+            # Contar pedidos del cliente de forma segura
+            total_pedidos = 0
+            ultimo_pedido_info = {"numero": None, "total": 0}
             
-            # Último pedido
-            ultimo_pedido = db.query(Pedido).filter(
-                Pedido.cliente_id == cliente.id
-            ).order_by(desc(Pedido.fecha_pedido)).first()
+            try:
+                total_pedidos = db.query(func.count(Pedido.id)).filter(
+                    Pedido.cliente_id == cliente.id
+                ).scalar() or 0
+                
+                # Último pedido
+                ultimo_pedido = db.query(Pedido).filter(
+                    Pedido.cliente_id == cliente.id
+                ).order_by(desc(Pedido.fecha_pedido)).first()
+                
+                if ultimo_pedido:
+                    ultimo_pedido_info = {
+                        "numero": ultimo_pedido.numero_pedido,
+                        "total": float(ultimo_pedido.total) if ultimo_pedido.total else 0
+                    }
+            except:
+                pass
             
             clientes_data.append({
                 "id": cliente.id,
-                "nombre": cliente.nombre,
-                "email": cliente.email,
-                "telefono": cliente.telefono,
-                "whatsapp_numero": cliente.whatsapp_numero,
-                "acepta_whatsapp": cliente.acepta_whatsapp,
+                "nombre": cliente.nombre or "Sin nombre",
+                "email": cliente.email or "",
+                "telefono": cliente.telefono or "",
+                "whatsapp_numero": cliente.whatsapp_numero or "",
+                "acepta_whatsapp": cliente.acepta_whatsapp or False,
                 "total_pedidos": total_pedidos,
                 "ticket_promedio": float(cliente.ticket_promedio) if cliente.ticket_promedio else 0,
                 "fecha_ultimo_pedido": cliente.fecha_ultimo_pedido.isoformat() if cliente.fecha_ultimo_pedido else None,
-                "ultimo_pedido": {
-                    "numero": ultimo_pedido.numero_pedido if ultimo_pedido else None,
-                    "total": float(ultimo_pedido.total) if ultimo_pedido else 0
-                },
-                "activo": cliente.activo
+                "ultimo_pedido": ultimo_pedido_info,
+                "activo": cliente.activo or False
             })
         
-        # Estadísticas
+        # Estadísticas simplificadas
         total_clientes = db.query(func.count(Cliente.id)).filter(
             Cliente.mayorista_id == mayorista_id
         ).scalar() or 0
         
-        clientes_activos = db.query(func.count(Cliente.id)).filter(
-            and_(Cliente.mayorista_id == mayorista_id, Cliente.activo == True)
-        ).scalar() or 0
+        clientes_activos = 0
+        try:
+            clientes_activos = db.query(func.count(Cliente.id)).filter(
+                and_(Cliente.mayorista_id == mayorista_id, Cliente.activo == True)
+            ).scalar() or 0
+        except:
+            pass
         
         return {
             "clientes": clientes_data,
