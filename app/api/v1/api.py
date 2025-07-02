@@ -1,6 +1,15 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import pedidos, recomendaciones, whatsapp, admin, carrito
 
+# Importar todos los modelos para que SQLAlchemy los registre
+from app.models.mayorista import Mayorista
+from app.models.usuario import Usuario
+from app.models.cliente import Cliente
+from app.models.producto import Producto
+from app.models.pedido import Pedido
+from app.models.item_pedido import ItemPedido
+from app.models.recomendacion import Recomendacion
+
 api_router = APIRouter()
 
 # Include all endpoint routers
@@ -24,7 +33,7 @@ async def setup_railway_database():
         print("🚀 CONFIGURANDO BASE DE DATOS EN RAILWAY")
         
         # Crear tablas
-        from app.models.base import Base
+        from app.core.database import Base
         Base.metadata.create_all(bind=engine)
         
         # Insertar datos básicos
