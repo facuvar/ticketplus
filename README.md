@@ -4,6 +4,9 @@ Sistema inteligente de recomendaciones que genera ingresos adicionales automáti
 
 ## 🚀 Características Principales
 
+## Hay que agregar un PANEL, en donde YO como dueño del sistema puedo ver cuantas distribuidoras de Gescom estan usando el sistema y poder pausarlo,
+eliminar el cliente, etc
+
 ### 📊 Dashboard Administrativo
 - **Dashboard responsive** optimizado para móvil y desktop
 - **Métricas en tiempo real** de ingresos por Ticket+

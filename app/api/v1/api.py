@@ -317,4 +317,47 @@ async def test_simple():
             "status": "ERROR",
             "error": str(e),
             "traceback": traceback.format_exc()
+        }
+
+# Endpoint de auto-setup que se ejecuta si no hay tablas
+@api_router.get("/auto-setup")
+async def auto_setup():
+    """
+    Endpoint que verifica si las tablas existen y las crea automáticamente si no existen
+    """
+    try:
+        from app.core.database import SessionLocal, engine
+        from sqlalchemy import text, inspect
+        
+        # Verificar si las tablas existen
+        inspector = inspect(engine)
+        tablas_existentes = inspector.get_table_names()
+        
+        if len(tablas_existentes) == 0:
+            print("🚨 NO HAY TABLAS - Ejecutando setup automático...")
+            
+            # Ejecutar setup automáticamente
+            setup_result = await setup_railway_database()
+            
+            return {
+                "auto_setup": True,
+                "tablas_antes": 0,
+                "setup_result": setup_result,
+                "mensaje": "🔄 Setup ejecutado automáticamente porque no había tablas"
+            }
+        else:
+            return {
+                "auto_setup": False,
+                "tablas_existentes": tablas_existentes,
+                "total_tablas": len(tablas_existentes),
+                "mensaje": "✅ Las tablas ya existen, no se necesita setup"
+            }
+            
+    except Exception as e:
+        import traceback
+        return {
+            "auto_setup": False,
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+            "mensaje": "❌ Error en auto-setup"
         } 
