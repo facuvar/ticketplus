@@ -183,4 +183,72 @@ async def setup_railway_database():
             "success": False,
             "message": f"❌ Error configurando base de datos: {str(e)}",
             "data": None
-        } 
+        }
+
+# Endpoint temporal de diagnóstico para debug
+@api_router.get("/debug-dashboard/{mayorista_id}")
+async def debug_dashboard_endpoints(mayorista_id: int):
+    """
+    Endpoint temporal para probar todas las secciones del dashboard
+    """
+    from app.core.database import get_db
+    from fastapi import Depends
+    from sqlalchemy.orm import Session
+    import traceback
+    
+    def get_db_sync():
+        from app.core.database import SessionLocal
+        db = SessionLocal()
+        try:
+            return db
+        finally:
+            pass
+    
+    db = get_db_sync()
+    resultados = {}
+    
+    # Test pedidos
+    try:
+        from app.api.v1.endpoints.admin import obtener_pedidos
+        # No podemos llamar directamente la función async, simulamos
+        from app.models.pedido import Pedido
+        count_pedidos = db.query(Pedido).filter(Pedido.mayorista_id == mayorista_id).count()
+        resultados["pedidos"] = {"status": "OK", "count": count_pedidos}
+    except Exception as e:
+        resultados["pedidos"] = {"status": "ERROR", "error": str(e)}
+    
+    # Test clientes  
+    try:
+        from app.models.cliente import Cliente
+        count_clientes = db.query(Cliente).filter(Cliente.mayorista_id == mayorista_id).count()
+        resultados["clientes"] = {"status": "OK", "count": count_clientes}
+    except Exception as e:
+        resultados["clientes"] = {"status": "ERROR", "error": str(e)}
+    
+    # Test recomendaciones
+    try:
+        from app.models.recomendacion import Recomendacion
+        count_recs = db.query(Recomendacion).filter(Recomendacion.mayorista_id == mayorista_id).count()
+        resultados["recomendaciones"] = {"status": "OK", "count": count_recs}
+    except Exception as e:
+        resultados["recomendaciones"] = {"status": "ERROR", "error": str(e)}
+    
+    # Test analytics (aquí puede estar el problema)
+    try:
+        from sqlalchemy import func
+        from datetime import datetime, timedelta
+        fecha_inicio = datetime.now() - timedelta(days=7)
+        
+        # Probar func.hour() que puede fallar en SQLite
+        test_hour = db.query(func.hour(Recomendacion.fecha_generacion)).first()
+        resultados["analytics_hour"] = {"status": "OK", "test": "func.hour() funciona"}
+    except Exception as e:
+        resultados["analytics_hour"] = {"status": "ERROR", "error": str(e)}
+    
+    db.close()
+    
+    return {
+        "mayorista_id": mayorista_id,
+        "tests": resultados,
+        "mensaje": "🔍 Diagnóstico completo de endpoints del dashboard"
+    } 
