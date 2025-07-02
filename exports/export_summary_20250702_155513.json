@@ -1,0 +1,20 @@
+{
+  "timestamp": "20250702_155513",
+  "database": "ticketplus_dev",
+  "files": {
+    "structure": "exports\\ticketplus_structure_20250702_155513.sql",
+    "data": "exports\\ticketplus_data_20250702_155513.sql",
+    "backup": "exports\\ticketplus_full_backup_20250702_155513.sql",
+    "import_script": "exports\\import_to_railway_20250702_155513.sh"
+  },
+  "tables_exported": [
+    "mayoristas",
+    "clientes",
+    "usuarios",
+    "productos",
+    "pedidos",
+    "items_pedido",
+    "recomendaciones"
+  ],
+  "export_date": "2025-07-02T15:55:14.585118"
+}

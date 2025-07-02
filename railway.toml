@@ -1,0 +1,14 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "python main.py"
+healthcheckPath = "/docs"
+healthcheckTimeout = 60
+restartPolicyMaxRetries = 3
+
+[services.web]
+httpPort = 8000
+
+[services.mysql]
+image = "mysql:8.0" 

@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Ticket+</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #121212;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #1e1e1e;
+            border-right: 1px solid #333;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            padding: 24px 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .nav-menu {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #b0b0b0;
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: #2a2a2a;
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background: #2a2a2a;
+            color: #4CAF50;
+            border-left-color: #4CAF50;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            background: #121212;
+        }
+
+        .header {
+            background: #1e1e1e;
+            border-bottom: 1px solid #333;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Botón hamburguesa para móviles */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: #e0e0e0;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .mobile-menu-btn:hover {
+            background: #2a2a2a;
+        }
+
+        /* Overlay para cerrar menú en móvil */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #555;
+            background: #2a2a2a;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #3a3a3a;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            border-color: #4CAF50;
+            color: white;
+        }
+
+        .content {
+            padding: 32px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: #4CAF50;
+            transform: translateY(-2px);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: #b0b0b0;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .stat-change {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .stat-change.positive {
+            color: #4CAF50;
+        }
+
+        .stat-change.negative {
+            color: #f44336;
+        }
+
+        .view-report {
+            margin-top: 16px;
+        }
+
+        .view-report a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .chart-card {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .chart-period {
+            font-size: 14px;
+            color: #b0b0b0;
+        }
+
+        .chart-placeholder {
+            height: 200px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+
+        /* Recent Activity */
+        .activity-card {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .activity-list {
+            space-y: 16px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #4CAF50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-user {
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .activity-action {
+            font-size: 14px;
+            color: #b0b0b0;
+            margin-top: 2px;
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .activity-amount {
+            font-weight: 600;
+            color: #4CAF50;
+        }
+
+        /* ===== NUEVOS ESTILOS PARA FUNCIONALIDADES ===== */
+
+        /* Headers de secciones */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #333;
+        }
+
+        .section-header h2 {
+            color: #fff;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .stats-summary {
+            display: flex;
+            gap: 12px;
+        }
+
+        .stat-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .stat-badge.total { background: #1e88e5; color: white; }
+        .stat-badge.pendiente { background: #ff9800; color: white; }
+        .stat-badge.procesando { background: #2196f3; color: white; }
+        .stat-badge.entregado { background: #4caf50; color: white; }
+        .stat-badge.clickeadas { background: #4caf50; color: white; }
+        .stat-badge.conversion { background: #9c27b0; color: white; }
+        .stat-badge.activos { background: #4caf50; color: white; }
+
+        /* Tablas de datos */
+        .table-container {
+            background: #1e1e1e;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #333;
+            margin-bottom: 24px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: #2a2a2a;
+            color: #fff;
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid #333;
+        }
+
+        .data-table td {
+            padding: 16px;
+            border-bottom: 1px solid #333;
+            color: #e0e0e0;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover {
+            background: #252525;
+        }
+
+        /* Badges de estado y tipo */
+        .status-badge, .type-badge, .score-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.pendiente { background: #ff9800; color: white; }
+        .status-badge.procesando { background: #2196f3; color: white; }
+        .status-badge.entregado { background: #4caf50; color: white; }
+        .status-badge.activo { background: #4caf50; color: white; }
+        .status-badge.inactivo { background: #f44336; color: white; }
+        .status-badge.enviado { background: #4caf50; color: white; }
+
+        .type-badge.normal { background: #666; color: white; }
+        .type-badge.upsell { background: #4caf50; color: white; }
+        .type-badge.complementario { background: #2196f3; color: white; }
+        .type-badge.historico { background: #ff9800; color: white; }
+
+        .score-badge {
+            background: #4caf50;
+            color: white;
+        }
+
+        /* Paginación */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Analytics */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .chart-simple {
+            display: flex;
+            gap: 16px;
+            padding: 20px 0;
+        }
+
+        .chart-bar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .bar-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .bar-container {
+            height: 120px;
+            display: flex;
+            align-items: end;
+        }
+
+        .bar {
+            width: 30px;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+        }
+
+        .bar-value {
+            font-size: 12px;
+            color: #4caf50;
+            font-weight: 600;
+        }
+
+        .top-productos {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .producto-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+
+        .ranking {
+            font-weight: 700;
+            color: #4caf50;
+            min-width: 30px;
+        }
+
+        .nombre {
+            flex: 1;
+            color: #fff;
+        }
+
+        .stats {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Configuración */
+        .config-sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .config-card {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .config-card h3 {
+            color: #fff;
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+
+        .config-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-field label {
+            color: #b0b0b0;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-field input {
+            padding: 8px 12px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            background: #2a2a2a;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+
+        .form-field input:focus {
+            outline: none;
+            border-color: #4caf50;
+        }
+
+        .config-actions {
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Mensajes de error */
+        .error-message {
+            text-align: center;
+            padding: 40px;
+            color: #f44336;
+            font-size: 18px;
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 12px;
+        }
+
+        /* RESPONSIVE DESIGN PARA MÓVILES */
+        @media (max-width: 768px) {
+            .app {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -260px;
+                width: 260px;
+                height: 100vh;
+                z-index: 1000;
+                transition: left 0.3s ease;
+                background: #1e1e1e;
+            }
+
+            .sidebar.mobile-open {
+                left: 0;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .main {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .header {
+                padding: 12px 16px;
+                position: relative;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+                margin-right: 12px;
+            }
+
+            .header-title {
+                font-size: 20px;
+            }
+
+            .header-controls {
+                gap: 8px;
+            }
+
+            .header-controls .btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .content {
+                padding: 16px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                margin-bottom: 24px;
+            }
+
+            .stat-card {
+                padding: 16px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .chart-card {
+                padding: 16px;
+            }
+
+            .activity-card {
+                padding: 16px;
+            }
+
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .config-sections {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .config-card {
+                padding: 16px;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            .data-table {
+                min-width: 600px;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .section-header h2 {
+                font-size: 20px;
+            }
+
+            .stats-summary {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .stat-badge {
+                font-size: 12px;
+                padding: 4px 8px;
+            }
+        }
+
+        /* Para tablets pequeñas */
+        @media (max-width: 480px) {
+            .header-controls {
+                display: none;
+            }
+
+            .header-title {
+                font-size: 18px;
+            }
+
+            .stats-grid {
+                gap: 12px;
+            }
+
+            .stat-card {
+                padding: 12px;
+            }
+
+            .stat-value {
+                font-size: 20px;
+            }
+
+            .chart-card, .activity-card {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Overlay para cerrar menú en móvil -->
+        <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+        
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="logo">
+                <div class="logo-icon">T+</div>
+                <div class="logo-text">Ticket+</div>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-item active">
+                    <div class="nav-icon">📊</div>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-icon">📦</div>
+                    <span>Pedidos</span>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-icon">🎯</div>
+                    <span>Recomendaciones</span>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-icon">📱</div>
+                    <span>WhatsApp</span>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-icon">👥</div>
+                    <span>Clientes</span>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-icon">📈</div>
+                    <span>Analytics</span>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-icon">⚙️</div>
+                    <span>Configuración</span>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main">
+            <header class="header">
+                <div style="display: flex; align-items: center;">
+                    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+                    <h1 class="header-title" style="cursor: pointer;" onclick="mostrarDashboard()">📊 Dashboard</h1>
+                </div>
+                <div class="header-controls">
+                    <button class="btn">Filtrar Por</button>
+                    <button class="btn btn-primary">Exportar</button>
+                    <div style="color: #666;">Marzo</div>
+                </div>
+            </header>
+
+            <main class="content">
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">📋 Pedidos Hoy</div>
+                        </div>
+                        <div class="stat-value" id="pedidos-hoy">--</div>
+                        <div class="stat-change positive">↗ 4.2%</div>
+                        <div class="view-report">
+                            <a href="#">Ver Reporte →</a>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">🎯 Recomendaciones Enviadas</div>
+                        </div>
+                        <div class="stat-value" id="recomendaciones-enviadas">--</div>
+                        <div class="stat-change positive">↗ 20% vs mes anterior</div>
+                        <div class="view-report">
+                            <a href="#">Ver Reporte →</a>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">📈 Conversión %</div>
+                        </div>
+                        <div class="stat-value" id="conversion-rate">--%</div>
+                        <div class="stat-change negative">↓ 1%</div>
+                        <div class="view-report">
+                            <a href="#">Ver Reporte →</a>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">💰 Ingresos x Ticket+</div>
+                        </div>
+                        <div class="stat-value" id="ingresos-ticket-plus">$--</div>
+                        <div class="stat-change positive">↗ Ventas adicionales</div>
+                        <div class="view-report">
+                            <a href="#">Ver Reporte →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Ingresos x Ticket+ (7 días)</h3>
+                            <div class="chart-period">Últimos 7 días</div>
+                        </div>
+                        <div class="chart-placeholder" id="chart-ingresos">
+                            📊 Cargando gráfico de ingresos...
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Canales de Tráfico</h3>
+                            <div class="chart-period">Todo el tiempo</div>
+                        </div>
+                        <div class="chart-placeholder">
+                            🥧 Gráfico Circular<br>
+                            Directo: 50.5%<br>
+                            Referido: 30.5%<br>
+                            Orgánico: 19%
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="activity-card">
+                    <div class="activity-header">
+                        <h3 class="chart-title">Actividad Reciente</h3>
+                    </div>
+                    <div class="activity-list" id="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-avatar">RR</div>
+                            <div class="activity-content">
+                                <div class="activity-user">Ronald Richards</div>
+                                <div class="activity-action">Pedido completado</div>
+                            </div>
+                            <div class="activity-time">hace 5 min</div>
+                            <div class="activity-amount">$17,208.20</div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <div class="activity-avatar">DS</div>
+                            <div class="activity-content">
+                                <div class="activity-user">Darrell Steward</div>
+                                <div class="activity-action">Cliente nuevo registrado</div>
+                            </div>
+                            <div class="activity-time">hace 17 min</div>
+                            <div class="activity-amount">$50.50</div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <div class="activity-avatar">MM</div>
+                            <div class="activity-content">
+                                <div class="activity-user">Marvin McKinney</div>
+                                <div class="activity-action">Recomendación clickeada</div>
+                            </div>
+                            <div class="activity-time">hace 5 min</div>
+                            <div class="activity-amount">$2,856.03</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Estado global de la aplicación
+        const app = {
+            mayorista_id: 4,
+            seccion_actual: 'dashboard'
+        };
+
+        // Cargar datos del dashboard
+        async function cargarDashboard() {
+            try {
+                // Esperar un poco para asegurar que el DOM esté listo
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Verificar que los elementos del dashboard existen
+                const elementosPedidosHoy = document.getElementById('pedidos-hoy');
+                
+                if (!elementosPedidosHoy) {
+                    console.log('Elementos del dashboard no encontrados, no estamos en la vista del dashboard');
+                    return; // No estamos en la vista del dashboard
+                }
+                
+                const response = await fetch(`/api/v1/admin/dashboard/4`); // Usar ID fijo por ahora
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Datos del dashboard cargados:', data);
+                
+                // Función helper para actualizar elementos de forma segura
+                const updateElement = (id, value) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = value;
+                        return true;
+                    }
+                    return false;
+                };
+                
+                // Actualizar métricas principales
+                updateElement('pedidos-hoy', data.pedidos_hoy || 0);
+                updateElement('recomendaciones-enviadas', data.recomendaciones_enviadas || 0);
+                updateElement('conversion-rate', (data.conversion_rate || 0) + '%');
+                
+                // NUEVA MÉTRICA: Ingresos x Ticket+
+                const ingresos = data.ingresos_ticket_plus || 0;
+                updateElement('ingresos-ticket-plus', '$' + new Intl.NumberFormat('es-AR').format(ingresos));
+                
+                // Actualizar ticket promedio si existe
+                const ticketPromedio = data.ticket_promedio || 0;
+                updateElement('ticket-promedio', '$' + new Intl.NumberFormat('es-AR').format(ticketPromedio));
+                
+                // Actualizar gráfico de pedidos (primer canvas)
+                try {
+                    const pedidosChart = document.getElementById('pedidosChart');
+                    if (pedidosChart && data.graficos && data.graficos.pedidos_por_dia) {
+                        const container = pedidosChart.parentElement;
+                        const totalPedidos = data.graficos.pedidos_por_dia.reduce((sum, p) => sum + p, 0);
+                        container.innerHTML = `
+                            <h3>📈 Pedidos Últimos 7 Días</h3>
+                            <div style="text-align: center; padding: 20px;">
+                                <div style="font-size: 32px; margin-bottom: 10px; color: #2196F3;">
+                                    📦 ${totalPedidos}
+                                </div>
+                                <div style="color: #2196F3; margin-bottom: 15px; font-size: 16px;">
+                                    Total pedidos (7 días)
+                                </div>
+                                <div style="color: #b0b0b0; font-size: 14px;">
+                                    Promedio diario: ${(totalPedidos / 7).toFixed(1)} pedidos
+                                </div>
+                            </div>
+                        `;
+                    }
+                } catch (e) {
+                    console.warn('Error actualizando gráfico pedidos:', e);
+                }
+                
+                // Actualizar gráfico de ingresos
+                try {
+                    if (typeof actualizarGraficoIngresos === 'function' && data.graficos) {
+                        actualizarGraficoIngresos(data.graficos);
+                    }
+                } catch (e) {
+                    console.warn('Error actualizando gráfico ingresos:', e);
+                }
+                
+                // Actualizar productos más recomendados
+                try {
+                    if (typeof actualizarProductosRecomendados === 'function' && data.productos_mas_recomendados) {
+                        actualizarProductosRecomendados(data.productos_mas_recomendados);
+                    }
+                } catch (e) {
+                    console.warn('Error actualizando productos:', e);
+                }
+                
+            } catch (error) {
+                console.error('Error cargando dashboard:', error);
+                
+                // Función helper para actualizar elementos de forma segura en caso de error
+                const updateElementSafe = (id, value) => {
+                    const element = document.getElementById(id);
+                    if (element) element.textContent = value;
+                };
+                
+                // Mostrar valores por defecto en caso de error
+                updateElementSafe('pedidos-hoy', 'Error');
+                updateElementSafe('recomendaciones-enviadas', 'Error');
+                updateElementSafe('conversion-rate', 'Error');
+                updateElementSafe('ingresos-ticket-plus', 'Error');
+            }
+        }
+
+        // 📦 CARGAR PEDIDOS
+        async function cargarPedidos() {
+            try {
+                const response = await fetch(`/api/v1/admin/pedidos/${app.mayorista_id}?limit=20`);
+                const data = await response.json();
+                
+                const content = document.querySelector('.content');
+                content.innerHTML = `
+                    <div class="section-header">
+                        <h2>📦 Gestión de Pedidos</h2>
+                        <div class="stats-summary">
+                            <span class="stat-badge pendiente">Pendientes: ${data.estadisticas.pendientes}</span>
+                            <span class="stat-badge procesando">Procesando: ${data.estadisticas.procesando}</span>
+                            <span class="stat-badge entregado">Entregados: ${data.estadisticas.entregados}</span>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Pedido</th>
+                                    <th>Cliente</th>
+                                    <th>Tipo</th>
+                                    <th>Estado</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Fecha</th>
+                                    <th>WhatsApp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.pedidos.map(pedido => `
+                                    <tr>
+                                        <td><strong>${pedido.numero_pedido}</strong></td>
+                                        <td>${pedido.cliente.nombre}</td>
+                                        <td><span class="type-badge ${pedido.tipo.toLowerCase()}">${pedido.tipo}</span></td>
+                                        <td><span class="status-badge ${pedido.estado}">${pedido.estado}</span></td>
+                                        <td>${pedido.items_count} items</td>
+                                        <td>$${new Intl.NumberFormat('es-AR').format(pedido.total)}</td>
+                                        <td>${new Date(pedido.fecha_pedido).toLocaleDateString()}</td>
+                                        <td>${pedido.recomendaciones_enviadas ? '✅ Enviado' : '⏸️ Pendiente'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination">
+                        <span>Total: ${data.total} pedidos</span>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error cargando pedidos:', error);
+                mostrarError('Error cargando pedidos');
+            }
+        }
+
+        // 🎯 CARGAR RECOMENDACIONES
+        async function cargarRecomendaciones() {
+            try {
+                const response = await fetch(`/api/v1/admin/recomendaciones/${app.mayorista_id}?limit=20`);
+                const data = await response.json();
+                
+                const content = document.querySelector('.content');
+                content.innerHTML = `
+                    <div class="section-header">
+                        <h2>🎯 Recomendaciones Generadas</h2>
+                        <div class="stats-summary">
+                            <span class="stat-badge total">Total: ${data.total}</span>
+                            <span class="stat-badge clickeadas">Clickeadas: ${data.clickeadas}</span>
+                            <span class="stat-badge conversion">Conversión: ${data.conversion_rate}%</span>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cliente</th>
+                                    <th>Precio</th>
+                                    <th>Tipo</th>
+                                    <th>Score</th>
+                                    <th>Estado</th>
+                                    <th>Click</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.recomendaciones.map(rec => `
+                                    <tr>
+                                        <td><strong>${rec.producto_nombre}</strong></td>
+                                        <td>${rec.pedido.cliente}</td>
+                                        <td>$${new Intl.NumberFormat('es-AR').format(rec.precio)}</td>
+                                        <td><span class="type-badge ${rec.tipo.toLowerCase()}">${rec.tipo}</span></td>
+                                        <td><span class="score-badge">${rec.score}</span></td>
+                                        <td><span class="status-badge ${rec.estado}">${rec.estado}</span></td>
+                                        <td>${rec.fue_clickeada ? '✅ Sí' : '❌ No'}</td>
+                                        <td>${new Date(rec.fecha_generacion).toLocaleDateString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error cargando recomendaciones:', error);
+                mostrarError('Error cargando recomendaciones');
+            }
+        }
+
+        // 📱 CARGAR WHATSAPP
+        async function cargarWhatsapp() {
+            try {
+                const response = await fetch(`/api/v1/admin/whatsapp/${app.mayorista_id}`);
+                const data = await response.json();
+                
+                const content = document.querySelector('.content');
+                content.innerHTML = `
+                    <div class="section-header">
+                        <h2>📱 Estadísticas WhatsApp</h2>
+                        <div class="stats-summary">
+                            <span class="stat-badge total">Mensajes: ${data.mensajes_enviados}</span>
+                            <span class="stat-badge clickeadas">Clicks: ${data.clicks_whatsapp}</span>
+                            <span class="stat-badge conversion">Apertura: ${data.tasa_apertura}%</span>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Pedido</th>
+                                    <th>Cliente</th>
+                                    <th>Teléfono</th>
+                                    <th>Enviado</th>
+                                    <th>Click</th>
+                                    <th>Fecha Click</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.ultimos_mensajes.map(msg => `
+                                    <tr>
+                                        <td><strong>${msg.pedido_numero}</strong></td>
+                                        <td>${msg.cliente}</td>
+                                        <td>${msg.telefono || 'No disponible'}</td>
+                                        <td>${msg.fecha_envio ? new Date(msg.fecha_envio).toLocaleDateString() : 'No enviado'}</td>
+                                        <td>${msg.click_realizado ? '✅ Sí' : '❌ No'}</td>
+                                        <td>${msg.fecha_click ? new Date(msg.fecha_click).toLocaleDateString() : '-'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error cargando WhatsApp:', error);
+                mostrarError('Error cargando estadísticas WhatsApp');
+            }
+        }
+
+        // 👥 CARGAR CLIENTES
+        async function cargarClientes() {
+            try {
+                const response = await fetch(`/api/v1/admin/clientes/${app.mayorista_id}?limit=20`);
+                const data = await response.json();
+                
+                const content = document.querySelector('.content');
+                content.innerHTML = `
+                    <div class="section-header">
+                        <h2>👥 Gestión de Clientes</h2>
+                        <div class="stats-summary">
+                            <span class="stat-badge total">Total: ${data.total}</span>
+                            <span class="stat-badge activos">Activos: ${data.activos}</span>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Email</th>
+                                    <th>WhatsApp</th>
+                                    <th>Pedidos</th>
+                                    <th>Ticket Promedio</th>
+                                    <th>Último Pedido</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.clientes.map(cliente => `
+                                    <tr>
+                                        <td><strong>${cliente.nombre}</strong></td>
+                                        <td>${cliente.email || 'No disponible'}</td>
+                                        <td>${cliente.whatsapp_numero || 'No disponible'}</td>
+                                        <td>${cliente.total_pedidos}</td>
+                                        <td>$${new Intl.NumberFormat('es-AR').format(cliente.ticket_promedio)}</td>
+                                        <td>${cliente.fecha_ultimo_pedido ? new Date(cliente.fecha_ultimo_pedido).toLocaleDateString() : 'Nunca'}</td>
+                                        <td><span class="status-badge ${cliente.activo ? 'activo' : 'inactivo'}">${cliente.activo ? 'Activo' : 'Inactivo'}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error cargando clientes:', error);
+                mostrarError('Error cargando clientes');
+            }
+        }
+
+        // 📈 CARGAR ANALYTICS
+        async function cargarAnalytics() {
+            try {
+                const response = await fetch(`/api/v1/admin/analytics/${app.mayorista_id}?dias=7`);
+                const data = await response.json();
+                
+                const content = document.querySelector('.content');
+                content.innerHTML = `
+                    <div class="section-header">
+                        <h2>📈 Analytics Avanzado</h2>
+                        <div class="stats-summary">
+                            <span class="stat-badge total">Recomendaciones: ${data.resumen.total_recomendaciones}</span>
+                            <span class="stat-badge clickeadas">Clicks: ${data.resumen.total_clicks}</span>
+                            <span class="stat-badge conversion">Conversión: ${data.resumen.conversion_promedio}%</span>
+                        </div>
+                    </div>
+
+                    <div class="analytics-grid">
+                        <div class="chart-card">
+                            <h3>📊 Conversión por Día (7 días)</h3>
+                            <div class="chart-simple">
+                                ${data.conversion_por_dia.map(dia => `
+                                    <div class="chart-bar">
+                                        <div class="bar-label">${dia.fecha}</div>
+                                        <div class="bar-container">
+                                            <div class="bar" style="height: ${Math.max(dia.conversion * 2, 10)}px; background: #4CAF50;"></div>
+                                        </div>
+                                        <div class="bar-value">${dia.conversion}%</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="chart-card">
+                            <h3>🏆 Top Productos Recomendados</h3>
+                            <div class="top-productos">
+                                ${data.top_productos.slice(0, 5).map((producto, index) => `
+                                    <div class="producto-item">
+                                        <span class="ranking">#${index + 1}</span>
+                                        <span class="nombre">${producto.nombre}</span>
+                                        <span class="stats">${producto.recomendaciones} recs, ${producto.conversion}% conv</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error cargando analytics:', error);
+                mostrarError('Error cargando analytics');
+            }
+        }
+
+        // ⚙️ CARGAR CONFIGURACIÓN
+        async function cargarConfiguracion() {
+            try {
+                const response = await fetch(`/api/v1/admin/configuracion/${app.mayorista_id}`);
+                const data = await response.json();
+                
+                const content = document.querySelector('.content');
+                content.innerHTML = `
+                    <div class="section-header">
+                        <h2>⚙️ Configuración del Sistema</h2>
+                    </div>
+
+                    <div class="config-sections">
+                        <div class="config-card">
+                            <h3>🏢 Información del Mayorista</h3>
+                            <div class="config-form">
+                                <div class="form-field">
+                                    <label>Nombre:</label>
+                                    <input type="text" value="${data.mayorista.nombre}" readonly>
+                                </div>
+                                <div class="form-field">
+                                    <label>Email:</label>
+                                    <input type="email" value="${data.mayorista.email || ''}" readonly>
+                                </div>
+                                <div class="form-field">
+                                    <label>Teléfono:</label>
+                                    <input type="tel" value="${data.mayorista.telefono || ''}" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="config-card">
+                            <h3>🎯 Configuración de Recomendaciones</h3>
+                            <div class="config-form">
+                                <div class="form-field">
+                                    <label>Recomendaciones Activas:</label>
+                                    <input type="checkbox" ${data.mayorista.recomendaciones_activas ? 'checked' : ''} disabled>
+                                </div>
+                                <div class="form-field">
+                                    <label>Tiempo de Espera (horas):</label>
+                                    <input type="number" value="${data.mayorista.tiempo_espera_horas || 24}" readonly>
+                                </div>
+                                <div class="form-field">
+                                    <label>Máx. Productos Recomendados:</label>
+                                    <input type="number" value="${data.mayorista.max_productos_recomendados || 6}" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="config-card">
+                            <h3>📱 Configuración WhatsApp</h3>
+                            <div class="config-form">
+                                <div class="form-field">
+                                    <label>API Key:</label>
+                                    <input type="password" value="${data.whatsapp.api_key || ''}" readonly>
+                                </div>
+                                <div class="form-field">
+                                    <label>Número de Teléfono:</label>
+                                    <input type="tel" value="${data.whatsapp.phone_number || ''}" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="config-card">
+                            <h3>🗄️ Conexión Gescom</h3>
+                            <div class="config-form">
+                                <div class="form-field">
+                                    <label>Host:</label>
+                                    <input type="text" value="${data.gescom.host || ''}" readonly>
+                                </div>
+                                <div class="form-field">
+                                    <label>Base de Datos:</label>
+                                    <input type="text" value="${data.gescom.base_datos || ''}" readonly>
+                                </div>
+                                <div class="form-field">
+                                    <label>Usuario:</label>
+                                    <input type="text" value="${data.gescom.usuario || ''}" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="config-actions">
+                        <button class="btn btn-primary" onclick="alert('Funcionalidad de edición próximamente')">
+                            ✏️ Editar Configuración
+                        </button>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error cargando configuración:', error);
+                mostrarError('Error cargando configuración');
+            }
+        }
+
+        function mostrarError(mensaje) {
+            const content = document.querySelector('.content');
+            content.innerHTML = `
+                <div class="error-message">
+                    ❌ ${mensaje}
+                </div>
+            `;
+        }
+        
+        // Actualizar gráfico de ingresos (versión simplificada)
+        function actualizarGraficoIngresos(graficos) {
+            // Buscar el canvas de ingresos
+            const chartElement = document.getElementById('ingresosChart');
+            
+            if (!chartElement) {
+                console.log('Canvas de ingresos no encontrado');
+                return;
+            }
+            
+            if (!graficos || !graficos.fechas || !graficos.ingresos_por_dia) {
+                // Crear un div para mostrar mensaje de sin datos
+                const container = chartElement.parentElement;
+                container.innerHTML = '<h3>💰 Ingresos por Ticket+ (7 días)</h3><div style="text-align: center; padding: 40px; color: #888;">📊 Sin datos de ingresos</div>';
+                return;
+            }
+            
+            const totalIngresos = graficos.ingresos_por_dia.reduce((sum, ing) => sum + ing, 0);
+            const promedioDiario = totalIngresos / graficos.fechas.length;
+            
+            // Reemplazar el canvas con información estática por ahora
+            const container = chartElement.parentElement;
+            container.innerHTML = `
+                <h3>💰 Ingresos por Ticket+ (7 días)</h3>
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 32px; margin-bottom: 10px; color: #4CAF50;">
+                        📈 $${new Intl.NumberFormat('es-AR').format(totalIngresos)}
+                    </div>
+                    <div style="color: #4CAF50; margin-bottom: 15px; font-size: 16px;">
+                        Total últimos 7 días
+                    </div>
+                    <div style="color: #b0b0b0; font-size: 14px; margin-bottom: 10px;">
+                        Promedio diario: $${new Intl.NumberFormat('es-AR').format(promedioDiario)}
+                    </div>
+                    <div style="margin-top: 15px; font-size: 12px; color: #888;">
+                        📅 ${graficos.fechas.slice(-3).join(' • ')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Actualizar productos más recomendados
+        function actualizarProductosRecomendados(productos) {
+            const productosContainer = document.getElementById('productos-recomendados');
+            
+            if (!productosContainer) {
+                console.log('Contenedor de productos recomendados no encontrado');
+                return;
+            }
+            
+            if (!productos || productos.length === 0) {
+                productosContainer.innerHTML = `
+                    <div class="activity-item">
+                        <div class="activity-details">
+                            <div class="activity-title">No hay productos recomendados disponibles</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            productos.slice(0, 5).forEach((producto, index) => {
+                const percentage = productos.length > 0 ? ((producto.veces / productos[0].veces) * 100).toFixed(1) : 0;
+                html += `
+                    <div class="activity-item">
+                        <div class="activity-avatar">#${index + 1}</div>
+                        <div class="activity-details">
+                            <div class="activity-title">${producto.nombre}</div>
+                            <div class="activity-description">Recomendado ${producto.veces} veces</div>
+                        </div>
+                        <div class="activity-time">${percentage}%</div>
+                    </div>
+                `;
+            });
+            
+            productosContainer.innerHTML = html;
+        }
+
+        // Navegación del sidebar
+        // Navegación con funcionalidad real
+        document.querySelectorAll('.nav-item').forEach((item, index) => {
+            item.addEventListener('click', () => {
+                // Actualizar navegación visual
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                // Actualizar título del header
+                const headerTitle = document.querySelector('.header-title');
+                
+                // Si estamos en móvil, cerrar el menú después de hacer clic
+                if (window.innerWidth <= 768) {
+                    setTimeout(() => {
+                        const sidebar = document.getElementById('sidebar');
+                        const overlay = document.querySelector('.sidebar-overlay');
+                        sidebar.classList.remove('mobile-open');
+                        overlay.classList.remove('active');
+                    }, 150); // Pequeño delay para que se vea la selección
+                }
+                
+                // Llamar función correspondiente según el índice
+                switch(index) {
+                    case 0: // Dashboard
+                        app.seccion_actual = 'dashboard';
+                        headerTitle.textContent = '📊 Dashboard';
+                        mostrarDashboard();
+                        break;
+                    case 1: // Pedidos
+                        app.seccion_actual = 'pedidos';
+                        headerTitle.textContent = 'Gestión de Pedidos';
+                        cargarPedidos();
+                        break;
+                    case 2: // Recomendaciones
+                        app.seccion_actual = 'recomendaciones';
+                        headerTitle.textContent = 'Recomendaciones';
+                        cargarRecomendaciones();
+                        break;
+                    case 3: // WhatsApp
+                        app.seccion_actual = 'whatsapp';
+                        headerTitle.textContent = 'Estadísticas WhatsApp';
+                        cargarWhatsapp();
+                        break;
+                    case 4: // Clientes
+                        app.seccion_actual = 'clientes';
+                        headerTitle.textContent = 'Gestión de Clientes';
+                        cargarClientes();
+                        break;
+                    case 5: // Analytics
+                        app.seccion_actual = 'analytics';
+                        headerTitle.textContent = 'Analytics Avanzado';
+                        cargarAnalytics();
+                        break;
+                    case 6: // Configuración
+                        app.seccion_actual = 'configuracion';
+                        headerTitle.textContent = 'Configuración';
+                        cargarConfiguracion();
+                        break;
+                }
+            });
+        });
+
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            // Esperar un poco más antes de cargar
+            setTimeout(() => {
+                cargarDashboard();
+            }, 500);
+            
+            // Actualizar cada 60 segundos (reducido para testing)
+            setInterval(cargarDashboard, 60000);
+        });
+        // Función para volver al dashboard principal
+        function mostrarDashboard() {
+            try {
+                // Actualizar navegación visual - activar primera opción (Dashboard)
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+                
+                // Actualizar título
+                document.querySelector('.header-title').innerHTML = '📊 Dashboard';
+                
+                // Restaurar estructura HTML original del dashboard
+                document.querySelector('.content').innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="pedidos-hoy">--</div>
+                                <div class="stat-label">Pedidos Hoy</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">🎯</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="recomendaciones-enviadas">--</div>
+                                <div class="stat-label">Recomendaciones Enviadas</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📈</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="conversion-rate">--%</div>
+                                <div class="stat-label">Conversión</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">💵</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="ticket-promedio">$--</div>
+                                <div class="stat-label">Ticket Promedio</div>
+                            </div>
+                        </div>
+                        <div class="stat-card highlight">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="ingresos-ticket-plus">$--</div>
+                                <div class="stat-label">Ingresos x Ticket+ (7 días)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>📈 Pedidos Últimos 7 Días</h3>
+                            <canvas id="pedidosChart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>💰 Ingresos por Ticket+ (7 días)</h3>
+                            <canvas id="ingresosChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="activity-section">
+                        <h3>🔥 Productos Más Recomendados</h3>
+                        <div class="activity-list" id="productos-recomendados">
+                            <div class="activity-item">
+                                <div class="activity-details">
+                                    <div class="activity-title">Cargando productos...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // IMPORTANTE: Recargar todos los datos del dashboard
+                setTimeout(() => {
+                    cargarDashboard();
+                }, 200);
+                
+            } catch (error) {
+                console.error('Error en mostrarDashboard():', error);
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // ===== FUNCIONES PARA MENÚ MÓVIL =====
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            
+            if (sidebar.classList.contains('mobile-open')) {
+                // Cerrar menú
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+            } else {
+                // Abrir menú
+                sidebar.classList.add('mobile-open');
+                overlay.classList.add('active');
+            }
+        }
+
+
+
+        // Cerrar menú al cambiar el tamaño de ventana (si se pasa a desktop)
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.querySelector('.sidebar-overlay');
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+            }
+        });
+
+    </script>
+</body>
+</html> 
