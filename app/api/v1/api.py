@@ -53,11 +53,11 @@ async def setup_railway_database():
             
             # Productos ejemplo
             productos = [
-                (1, 'COCA-350', 'Coca Cola 350ml', 150.0, 200.0, 100, 'Bebidas'),
-                (2, 'PEPSI-350', 'Pepsi Cola 350ml', 140.0, 190.0, 80, 'Bebidas'),
-                (3, 'AGUA-500', 'Agua Mineral 500ml', 80.0, 120.0, 150, 'Bebidas'),
-                (4, 'CHOC-100', 'Chocolate Milka 100g', 200.0, 280.0, 50, 'Golosinas'),
-                (5, 'PAPAS-150', 'Papas Fritas Lays 150g', 180.0, 250.0, 60, 'Snacks')
+                (1, 'COCA-350', 'COCA-350', 'Coca Cola 350ml', 200.0, 100, 'Bebidas'),
+                (2, 'PEPSI-350', 'PEPSI-350', 'Pepsi Cola 350ml', 190.0, 80, 'Bebidas'),
+                (3, 'AGUA-500', 'AGUA-500', 'Agua Mineral 500ml', 120.0, 150, 'Bebidas'),
+                (4, 'CHOC-100', 'CHOC-100', 'Chocolate Milka 100g', 280.0, 50, 'Golosinas'),
+                (5, 'PAPAS-150', 'PAPAS-150', 'Papas Fritas Lays 150g', 250.0, 60, 'Snacks')
             ]
             
             for producto in productos:
@@ -65,14 +65,14 @@ async def setup_railway_database():
                 result = connection.execute(text("SELECT COUNT(*) FROM productos WHERE id = :id"), {'id': producto[0]})
                 if result.fetchone()[0] == 0:
                     connection.execute(text("""
-                        INSERT INTO productos (id, codigo, nombre, precio_compra, precio_venta, 
+                        INSERT INTO productos (id, gescom_producto_id, codigo, nombre, precio, 
                                              stock, categoria, mayorista_id, activo)
-                        VALUES (:id, :codigo, :nombre, :precio_compra, :precio_venta, 
+                        VALUES (:id, :gescom_producto_id, :codigo, :nombre, :precio, 
                                 :stock, :categoria, 4, true)
                     """), {
-                        'id': producto[0], 'codigo': producto[1], 'nombre': producto[2],
-                        'precio_compra': producto[3], 'precio_venta': producto[4],
-                        'stock': producto[5], 'categoria': producto[6]
+                        'id': producto[0], 'gescom_producto_id': producto[1], 'codigo': producto[2], 
+                        'nombre': producto[3], 'precio': producto[4], 'stock': producto[5], 
+                        'categoria': producto[6]
                     })
             
             # Pedidos ejemplo con UPSELL
@@ -81,7 +81,7 @@ async def setup_railway_database():
                 connection.execute(text("""
                     INSERT INTO pedidos (id, numero_pedido, fecha_pedido, tipo, total, 
                                        estado, mayorista_id)
-                    VALUES (1, 'ORD-20250702-SIM-141550', '2025-07-02', 'ORIGINAL', 2500.0, 
+                    VALUES (1, 'ORD-20250702-SIM-141550', '2025-07-02', 'ORIGINAL', 590.0, 
                             'COMPLETADO', 4)
                 """))
             
@@ -90,26 +90,29 @@ async def setup_railway_database():
                 connection.execute(text("""
                     INSERT INTO pedidos (id, numero_pedido, fecha_pedido, tipo, total, 
                                        estado, codigo_referencia, pedido_original_id, mayorista_id)
-                    VALUES (2, 'ORD-20250702-SIM-141551', '2025-07-02', 'UPSELL', 850.0, 
+                    VALUES (2, 'ORD-20250702-SIM-141551', '2025-07-02', 'UPSELL', 360.0, 
                             'COMPLETADO', 'UP-001-ORD-20250702-SIM-141550', 1, 4)
                 """))
             
             # Items de pedidos
             items_pedidos = [
-                (1, 1, 1, 2, 200.0),  # Pedido 1, Producto 1 (Coca), cantidad 2
-                (2, 1, 2, 1, 190.0),  # Pedido 1, Producto 2 (Pepsi), cantidad 1  
-                (3, 2, 3, 3, 120.0),  # Pedido 2 (UPSELL), Producto 3 (Agua), cantidad 3
+                (1, 1, 1, 2, 200.0, 400.0, 'COCA-350', 'Coca Cola 350ml'),  # Pedido 1, Producto 1 (Coca), cantidad 2
+                (2, 1, 2, 1, 190.0, 190.0, 'PEPSI-350', 'Pepsi Cola 350ml'),  # Pedido 1, Producto 2 (Pepsi), cantidad 1  
+                (3, 2, 3, 3, 120.0, 360.0, 'AGUA-500', 'Agua Mineral 500ml'),  # Pedido 2 (UPSELL), Producto 3 (Agua), cantidad 3
             ]
             
             for item in items_pedidos:
                 result = connection.execute(text("SELECT COUNT(*) FROM items_pedido WHERE id = :id"), {'id': item[0]})
                 if result.fetchone()[0] == 0:
                     connection.execute(text("""
-                        INSERT INTO items_pedido (id, pedido_id, producto_id, cantidad, precio_unitario)
-                        VALUES (:id, :pedido_id, :producto_id, :cantidad, :precio_unitario)
+                        INSERT INTO items_pedido (id, pedido_id, producto_id, cantidad, precio_unitario, 
+                                                 subtotal, producto_codigo, producto_nombre)
+                        VALUES (:id, :pedido_id, :producto_id, :cantidad, :precio_unitario, 
+                                :subtotal, :producto_codigo, :producto_nombre)
                     """), {
                         'id': item[0], 'pedido_id': item[1], 'producto_id': item[2],
-                        'cantidad': item[3], 'precio_unitario': item[4]
+                        'cantidad': item[3], 'precio_unitario': item[4], 'subtotal': item[5],
+                        'producto_codigo': item[6], 'producto_nombre': item[7]
                     })
             
             # Recomendaciones de ejemplo
