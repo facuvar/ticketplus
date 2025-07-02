@@ -27,22 +27,39 @@ async def setup_railway_database():
     Una vez configurada, este endpoint puede ser removido
     """
     try:
-        from app.core.database import engine
-        from sqlalchemy import text
+        from app.core.database import engine, SessionLocal
+        from sqlalchemy import text, inspect
         
         print("🚀 CONFIGURANDO BASE DE DATOS EN RAILWAY")
         
+        # Verificar qué tablas existen actualmente
+        inspector = inspect(engine)
+        tablas_existentes = inspector.get_table_names()
+        print(f"📋 Tablas existentes antes: {tablas_existentes}")
+        
         # Crear tablas
         from app.core.database import Base
+        print("🔨 Creando tablas...")
         Base.metadata.create_all(bind=engine)
         
-        # Insertar datos básicos usando sintaxis compatible
-        with engine.connect() as connection:
+        # Verificar qué tablas se crearon
+        inspector = inspect(engine)
+        tablas_despues = inspector.get_table_names()
+        print(f"📋 Tablas después de create_all: {tablas_despues}")
+        
+        # Usar SessionLocal en lugar de engine.connect()
+        db = SessionLocal()
+        
+        try:
             # Verificar si el mayorista ya existe
-            result = connection.execute(text("SELECT COUNT(*) FROM mayoristas WHERE id = 4"))
-            if result.fetchone()[0] == 0:
+            result = db.execute(text("SELECT COUNT(*) FROM mayoristas WHERE id = 4"))
+            count = result.fetchone()[0]
+            print(f"👤 Mayoristas con ID 4: {count}")
+            
+            if count == 0:
+                print("➕ Creando mayorista...")
                 # Mayorista ejemplo
-                connection.execute(text("""
+                db.execute(text("""
                     INSERT INTO mayoristas (id, nombre, email, telefono, whatsapp_phone_number, 
                                           recomendaciones_activas, tiempo_espera_horas, 
                                           max_productos_recomendados, reglas_recomendacion, activo)
@@ -52,9 +69,13 @@ async def setup_railway_database():
                 """))
             
             # Cliente ejemplo
-            result = connection.execute(text("SELECT COUNT(*) FROM clientes WHERE id = 1"))
-            if result.fetchone()[0] == 0:
-                connection.execute(text("""
+            result = db.execute(text("SELECT COUNT(*) FROM clientes WHERE id = 1"))
+            count = result.fetchone()[0]
+            print(f"👥 Clientes con ID 1: {count}")
+            
+            if count == 0:
+                print("➕ Creando cliente...")
+                db.execute(text("""
                     INSERT INTO clientes (id, gescom_cliente_id, nombre, email, telefono, 
                                         mayorista_id, whatsapp_numero, acepta_whatsapp, activo)
                     VALUES (1, 'CLI-001', 'Cliente Ejemplo', 'cliente@ejemplo.com', '+5491234567890',
@@ -72,32 +93,34 @@ async def setup_railway_database():
             
             for producto in productos:
                 # Verificar si el producto ya existe
-                result = connection.execute(text("SELECT COUNT(*) FROM productos WHERE id = :id"), {'id': producto[0]})
+                result = db.execute(text("SELECT COUNT(*) FROM productos WHERE id = :id"), {'id': producto[0]})
                 if result.fetchone()[0] == 0:
-                    connection.execute(text("""
-                        INSERT INTO productos (id, gescom_producto_id, codigo, nombre, precio, 
+                    print(f"➕ Creando producto: {producto[3]}")
+                    db.execute(text("""
+                        INSERT INTO productos (id, codigo, gescom_producto_id, nombre, precio, 
                                              stock, categoria, mayorista_id, activo)
-                        VALUES (:id, :gescom_producto_id, :codigo, :nombre, :precio, 
+                        VALUES (:id, :codigo, :gescom_producto_id, :nombre, :precio, 
                                 :stock, :categoria, 4, true)
                     """), {
-                        'id': producto[0], 'gescom_producto_id': producto[1], 'codigo': producto[2], 
-                        'nombre': producto[3], 'precio': producto[4], 'stock': producto[5], 
-                        'categoria': producto[6]
+                        'id': producto[0], 'codigo': producto[1], 'gescom_producto_id': producto[2],
+                        'nombre': producto[3], 'precio': producto[4], 'stock': producto[5], 'categoria': producto[6]
                     })
             
             # Pedidos ejemplo con UPSELL
-            result = connection.execute(text("SELECT COUNT(*) FROM pedidos WHERE id = 1"))
+            result = db.execute(text("SELECT COUNT(*) FROM pedidos WHERE id = 1"))
             if result.fetchone()[0] == 0:
-                connection.execute(text("""
+                print("➕ Creando pedido ORIGINAL...")
+                db.execute(text("""
                     INSERT INTO pedidos (id, gescom_pedido_id, numero_pedido, fecha_pedido, tipo, 
                                        subtotal, total, estado, cliente_id, mayorista_id)
                     VALUES (1, 'SIM-141550', 'ORD-20250702-SIM-141550', '2025-07-02 14:15:50', 'ORIGINAL', 
                             590.0, 590.0, 'COMPLETADO', 1, 4)
                 """))
             
-            result = connection.execute(text("SELECT COUNT(*) FROM pedidos WHERE id = 2"))
+            result = db.execute(text("SELECT COUNT(*) FROM pedidos WHERE id = 2"))
             if result.fetchone()[0] == 0:
-                connection.execute(text("""
+                print("➕ Creando pedido UPSELL...")
+                db.execute(text("""
                     INSERT INTO pedidos (id, gescom_pedido_id, numero_pedido, fecha_pedido, tipo, 
                                        subtotal, total, estado, codigo_referencia, pedido_original_id, 
                                        cliente_id, mayorista_id)
@@ -107,23 +130,24 @@ async def setup_railway_database():
             
             # Items de pedidos
             items_pedidos = [
-                (1, 1, 1, 2, 200.0, 400.0, 'COCA-350', 'Coca Cola 350ml'),  # Pedido 1, Producto 1 (Coca), cantidad 2
-                (2, 1, 2, 1, 190.0, 190.0, 'PEPSI-350', 'Pepsi Cola 350ml'),  # Pedido 1, Producto 2 (Pepsi), cantidad 1  
-                (3, 2, 3, 3, 120.0, 360.0, 'AGUA-500', 'Agua Mineral 500ml'),  # Pedido 2 (UPSELL), Producto 3 (Agua), cantidad 3
+                (1, 1, 1, 2, 200.0, 400.0, 'COCA-350', 'Coca Cola 350ml'),
+                (2, 1, 2, 1, 190.0, 190.0, 'PEPSI-350', 'Pepsi Cola 350ml'),
+                (3, 2, 3, 3, 120.0, 360.0, 'AGUA-500', 'Agua Mineral 500ml'),
             ]
             
             for item in items_pedidos:
-                result = connection.execute(text("SELECT COUNT(*) FROM items_pedido WHERE id = :id"), {'id': item[0]})
+                result = db.execute(text("SELECT COUNT(*) FROM items_pedido WHERE id = :id"), {'id': item[0]})
                 if result.fetchone()[0] == 0:
-                    connection.execute(text("""
+                    print(f"➕ Creando item pedido: {item[7]}")
+                    db.execute(text("""
                         INSERT INTO items_pedido (id, pedido_id, producto_id, cantidad, precio_unitario, 
-                                                 subtotal, producto_codigo, producto_nombre)
-                        VALUES (:id, :pedido_id, :producto_id, :cantidad, :precio_unitario, 
-                                :subtotal, :producto_codigo, :producto_nombre)
+                                                subtotal, producto_codigo, producto_nombre)
+                        VALUES (:id, :pedido_id, :producto_id, :cantidad, :precio_unitario, :subtotal,
+                                :producto_codigo, :producto_nombre)
                     """), {
-                        'id': item[0], 'pedido_id': item[1], 'producto_id': item[2],
-                        'cantidad': item[3], 'precio_unitario': item[4], 'subtotal': item[5],
-                        'producto_codigo': item[6], 'producto_nombre': item[7]
+                        'id': item[0], 'pedido_id': item[1], 'producto_id': item[2], 'cantidad': item[3],
+                        'precio_unitario': item[4], 'subtotal': item[5], 'producto_codigo': item[6], 
+                        'producto_nombre': item[7]
                     })
             
             # Recomendaciones ejemplo
@@ -134,9 +158,10 @@ async def setup_railway_database():
             ]
             
             for rec in recomendaciones:
-                result = connection.execute(text("SELECT COUNT(*) FROM recomendaciones WHERE id = :id"), {'id': rec[0]})
+                result = db.execute(text("SELECT COUNT(*) FROM recomendaciones WHERE id = :id"), {'id': rec[0]})
                 if result.fetchone()[0] == 0:
-                    connection.execute(text("""
+                    print(f"➕ Creando recomendación: {rec[7]}")
+                    db.execute(text("""
                         INSERT INTO recomendaciones (id, pedido_id, producto_id, mayorista_id, tipo, 
                                                    score, razon, producto_nombre, producto_precio, 
                                                    fue_clickeada, fecha_generacion)
@@ -149,40 +174,48 @@ async def setup_railway_database():
                         'producto_precio': rec[8]
                     })
             
-            connection.commit()
-        
-        # Verificar datos
-        with engine.connect() as connection:
-            result = connection.execute(text("SELECT COUNT(*) FROM mayoristas"))
-            mayoristas = result.fetchone()[0]
+            db.commit()
             
-            result = connection.execute(text("SELECT COUNT(*) FROM productos"))
-            productos = result.fetchone()[0]
+            # Verificar qué se creó
+            mayoristas = db.execute(text("SELECT COUNT(*) FROM mayoristas")).fetchone()[0]
+            productos = db.execute(text("SELECT COUNT(*) FROM productos")).fetchone()[0]
+            pedidos = db.execute(text("SELECT COUNT(*) FROM pedidos")).fetchone()[0]
+            items = db.execute(text("SELECT COUNT(*) FROM items_pedido")).fetchone()[0]
+            recomendaciones = db.execute(text("SELECT COUNT(*) FROM recomendaciones")).fetchone()[0]
             
-            result = connection.execute(text("SELECT COUNT(*) FROM pedidos"))
-            pedidos = result.fetchone()[0]
+            print("✅ BASE DE DATOS CONFIGURADA EXITOSAMENTE")
+            print(f"📊 Registros: Mayoristas={mayoristas}, Productos={productos}, Pedidos={pedidos}, Items={items}, Recomendaciones={recomendaciones}")
             
-            result = connection.execute(text("SELECT COUNT(*) FROM items_pedido"))
-            items = result.fetchone()[0]
-        
-        return {
-            "success": True,
-            "message": "✅ Base de datos configurada exitosamente",
-            "data": {
-                "mayoristas": mayoristas,
-                "productos": productos,
-                "pedidos": pedidos,
-                "items_pedido": items,
-                "dashboard_url": "/api/v1/admin/dashboard/4",
-                "carrito_url": "/carrito.html"
+            return {
+                "success": True,
+                "message": "✅ Base de datos configurada exitosamente",
+                "data": {
+                    "tablas_antes": tablas_existentes,
+                    "tablas_despues": tablas_despues,
+                    "mayoristas": mayoristas,
+                    "productos": productos,
+                    "pedidos": pedidos,
+                    "items_pedido": items,
+                    "recomendaciones": recomendaciones,
+                    "dashboard_url": "/api/v1/admin/dashboard/4",
+                    "carrito_url": "/carrito.html"
+                }
             }
-        }
+            
+        finally:
+            db.close()
         
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"❌ ERROR: {str(e)}")
+        print(f"🔍 DETALLES: {error_details}")
         return {
             "success": False,
             "message": f"❌ Error configurando base de datos: {str(e)}",
-            "data": None
+            "data": {
+                "error_details": error_details
+            }
         }
 
 # Endpoint temporal de diagnóstico para debug
