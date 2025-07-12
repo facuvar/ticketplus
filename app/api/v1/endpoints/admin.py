@@ -284,6 +284,7 @@ async def obtener_pedidos(
                 "items_count": items_count,
                 "fecha_pedido": pedido.fecha_pedido.strftime("%Y-%m-%d") if pedido.fecha_pedido else "Sin fecha",
                 "recomendaciones_enviadas": pedido.recomendaciones_enviadas or False,
+                "token_carrito": pedido.token_carrito or f"token-{pedido.id}",
                 "referencia": {"icono": "📦" if not pedido.tipo or pedido.tipo.value == "original" else "🎯"}
             })
         

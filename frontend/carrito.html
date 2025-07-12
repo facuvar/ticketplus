@@ -242,12 +242,17 @@
     </div>
 
     <script>
-        // Obtener token de la URL
-        const token = window.location.pathname.split('/').pop();
+        // Obtener token de la URL (desde la ruta)
+        const pathSegments = window.location.pathname.split('/');
+        const token = pathSegments[pathSegments.length - 1];
         
         // Cargar datos del carrito
         async function cargarCarrito() {
             try {
+                if (!token || token === 'carrito') {
+                    throw new Error('Token no encontrado en la URL');
+                }
+                
                 const response = await fetch(`/api/v1/carrito/${token}/data`);
                 
                 if (!response.ok) {

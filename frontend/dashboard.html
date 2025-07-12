@@ -899,38 +899,10 @@
                 <!-- Recent Activity -->
                 <div class="activity-card">
                     <div class="activity-header">
-                        <h3 class="chart-title">Actividad Reciente</h3>
+                        <h3 class="chart-title">Últimos Pedidos con Recomendaciones</h3>
                     </div>
-                    <div class="activity-list" id="activity-list">
-                        <div class="activity-item">
-                            <div class="activity-avatar">RR</div>
-                            <div class="activity-content">
-                                <div class="activity-user">Ronald Richards</div>
-                                <div class="activity-action">Pedido completado</div>
-                            </div>
-                            <div class="activity-time">hace 5 min</div>
-                            <div class="activity-amount">$17,208.20</div>
-                        </div>
-                        
-                        <div class="activity-item">
-                            <div class="activity-avatar">DS</div>
-                            <div class="activity-content">
-                                <div class="activity-user">Darrell Steward</div>
-                                <div class="activity-action">Cliente nuevo registrado</div>
-                            </div>
-                            <div class="activity-time">hace 17 min</div>
-                            <div class="activity-amount">$50.50</div>
-                        </div>
-                        
-                        <div class="activity-item">
-                            <div class="activity-avatar">MM</div>
-                            <div class="activity-content">
-                                <div class="activity-user">Marvin McKinney</div>
-                                <div class="activity-action">Recomendación clickeada</div>
-                            </div>
-                            <div class="activity-time">hace 5 min</div>
-                            <div class="activity-amount">$2,856.03</div>
-                        </div>
+                    <div id="pedidos-recientes-container">
+                        <!-- La tabla de pedidos se insertará aquí -->
                     </div>
                 </div>
             </main>
@@ -1033,6 +1005,9 @@
                     console.warn('Error actualizando productos:', e);
                 }
                 
+                // LLAMAR A CARGAR PEDIDOS AL FINAL
+                await cargarPedidos();
+                
             } catch (error) {
                 console.error('Error cargando dashboard:', error);
                 
@@ -1053,20 +1028,22 @@
         // 📦 CARGAR PEDIDOS
         async function cargarPedidos() {
             try {
-                const response = await fetch(`/api/v1/admin/pedidos/${app.mayorista_id}?limit=20`);
+                const response = await fetch(`/api/v1/admin/pedidos/${app.mayorista_id}?limit=5`); // Limitar a 5 para el dashboard
                 const data = await response.json();
                 
+                // Seleccionar el nuevo contenedor en el dashboard
+                const container = document.getElementById('pedidos-recientes-container');
+                
+                // Si estamos en la sección de pedidos, usar el contenedor principal
                 const content = document.querySelector('.content');
-                content.innerHTML = `
-                    <div class="section-header">
-                        <h2>📦 Gestión de Pedidos</h2>
-                        <div class="stats-summary">
-                            <span class="stat-badge pendiente">Pendientes: ${data.estadisticas.pendientes}</span>
-                            <span class="stat-badge procesando">Procesando: ${data.estadisticas.procesando}</span>
-                            <span class="stat-badge entregado">Entregados: ${data.estadisticas.entregados}</span>
-                        </div>
-                    </div>
+                const targetContainer = app.seccion_actual === 'pedidos' ? content : container;
 
+                if (!targetContainer) {
+                    console.log("No se encontró el contenedor de destino para los pedidos.");
+                    return;
+                }
+
+                const tablaHTML = `
                     <div class="table-container">
                         <table class="data-table">
                             <thead>
@@ -1075,10 +1052,8 @@
                                     <th>Cliente</th>
                                     <th>Tipo</th>
                                     <th>Estado</th>
-                                    <th>Items</th>
                                     <th>Total</th>
-                                    <th>Fecha</th>
-                                    <th>WhatsApp</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1088,24 +1063,36 @@
                                         <td>${pedido.cliente.nombre}</td>
                                         <td><span class="type-badge ${pedido.tipo.toLowerCase()}">${pedido.tipo}</span></td>
                                         <td><span class="status-badge ${pedido.estado}">${pedido.estado}</span></td>
-                                        <td>${pedido.items_count} items</td>
                                         <td>$${new Intl.NumberFormat('es-AR').format(pedido.total)}</td>
-                                        <td>${new Date(pedido.fecha_pedido).toLocaleDateString()}</td>
-                                        <td>${pedido.recomendaciones_enviadas ? '✅ Enviado' : '⏸️ Pendiente'}</td>
+                                        <td>
+                                            <a href="/api/v1/carrito/${pedido.token_carrito}" target="_blank" class="btn-primary" style="text-decoration: none; padding: 6px 12px; font-size: 12px; border-radius: 6px;">Ver Carrito</a>
+                                        </td>
                                     </tr>
                                 `).join('')}
                             </tbody>
                         </table>
                     </div>
-
-                    <div class="pagination">
-                        <span>Total: ${data.total} pedidos</span>
-                    </div>
                 `;
+
+                if (app.seccion_actual === 'pedidos') {
+                    // Reemplazar todo el contenido si estamos en la sección de Pedidos
+                    targetContainer.innerHTML = `
+                        <div class="section-header">
+                            <h2>📦 Gestión de Pedidos</h2>
+                        </div>
+                        ${tablaHTML}
+                    `;
+                } else {
+                    // Solo añadir la tabla si estamos en el Dashboard
+                    targetContainer.innerHTML = tablaHTML;
+                }
                 
             } catch (error) {
                 console.error('Error cargando pedidos:', error);
-                mostrarError('Error cargando pedidos');
+                const container = document.getElementById('pedidos-recientes-container');
+                if (container) {
+                    container.innerHTML = '<p class="error-message">No se pudieron cargar los pedidos.</p>';
+                }
             }
         }
 
