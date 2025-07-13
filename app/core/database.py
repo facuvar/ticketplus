@@ -14,8 +14,9 @@ try:
     )
     # Probar la conexión
     with engine.connect() as conn:
-        pass
-    print("✅ Conectado a MySQL: ticketplus_dev")
+        # Obtener el nombre de la base de datos desde la URL
+        db_name = settings.DATABASE_URL.split('/')[-1]
+        print(f"✅ Conectado a MySQL: {db_name}")
 except Exception as e:
     print(f"⚠️ No se pudo conectar a MySQL: {e}")
     print("🔄 Usando SQLite como fallback...")
