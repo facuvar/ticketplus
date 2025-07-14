@@ -11,15 +11,13 @@ def is_railway() -> bool:
 def get_database_url() -> str:
     """Obtiene la URL de la base de datos según el entorno"""
     if is_railway():
-        # En Railway, usar las variables de entorno de Railway MySQL
         railway_db_url = os.getenv("DATABASE_URL")
         if railway_db_url:
-            # Forzar el prefijo pymysql si es Railway
-            if "hopper.proxy.rlwy.net" in railway_db_url and not railway_db_url.startswith("mysql+pymysql://"):
-                if railway_db_url.startswith("mysql://"):
-                    railway_db_url = railway_db_url.replace("mysql://", "mysql+pymysql://", 1)
-                else:
-                    railway_db_url = "mysql+pymysql://" + railway_db_url
+            # Forzar SIEMPRE el prefijo pymysql
+            if railway_db_url.startswith("mysql://"):
+                railway_db_url = railway_db_url.replace("mysql://", "mysql+pymysql://", 1)
+            elif not railway_db_url.startswith("mysql+pymysql://"):
+                railway_db_url = "mysql+pymysql://" + railway_db_url
             return railway_db_url
         
         # Construir URL desde variables individuales de Railway
