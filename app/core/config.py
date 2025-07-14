@@ -12,12 +12,16 @@ def get_database_url() -> str:
     """Obtiene la URL de la base de datos según el entorno"""
     if is_railway():
         railway_db_url = os.getenv("DATABASE_URL")
+        print(f"DEBUG: Valor original de DATABASE_URL: {railway_db_url}")
         if railway_db_url:
             # Forzar SIEMPRE el prefijo pymysql
             if railway_db_url.startswith("mysql://"):
+                print("DEBUG: Reemplazando prefijo mysql:// por mysql+pymysql://")
                 railway_db_url = railway_db_url.replace("mysql://", "mysql+pymysql://", 1)
             elif not railway_db_url.startswith("mysql+pymysql://"):
+                print("DEBUG: Agregando prefijo mysql+pymysql://")
                 railway_db_url = "mysql+pymysql://" + railway_db_url
+            print(f"DEBUG: Valor final de DATABASE_URL: {railway_db_url}")
             return railway_db_url
         
         # Construir URL desde variables individuales de Railway
