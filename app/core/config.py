@@ -10,6 +10,11 @@ def is_railway() -> bool:
 
 def get_database_url() -> str:
     """Obtiene la URL de la base de datos según el entorno"""
+    # PRIORIDAD: Si existe SQLALCHEMY_DATABASE_URL, usarla
+    sqlalchemy_url = os.getenv("SQLALCHEMY_DATABASE_URL")
+    if sqlalchemy_url:
+        print(f"DEBUG: Usando SQLALCHEMY_DATABASE_URL: {sqlalchemy_url}")
+        return sqlalchemy_url
     if is_railway():
         railway_db_url = os.getenv("DATABASE_URL")
         print(f"DEBUG: Valor original de DATABASE_URL: {railway_db_url}")
