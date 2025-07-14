@@ -1,4 +1,4 @@
-# 🎯 Ticket+ - Sistema de Recomendaciones IA para Mayoristas
+# 🎯 Ticket+ - Sistema de Recomendaciones IA para Mayoristas ##
 
 Sistema inteligente de recomendaciones que genera ingresos adicionales automáticamente mediante análisis de pedidos y sugerencias personalizadas vía WhatsApp.
 
