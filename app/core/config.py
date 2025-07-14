@@ -14,9 +14,12 @@ def get_database_url() -> str:
         # En Railway, usar las variables de entorno de Railway MySQL
         railway_db_url = os.getenv("DATABASE_URL")
         if railway_db_url:
-            # Convertir la URL de mysql:// a mysql+pymysql:// para usar pymysql
-            if railway_db_url.startswith("mysql://"):
-                railway_db_url = railway_db_url.replace("mysql://", "mysql+pymysql://", 1)
+            # Forzar el prefijo pymysql si es Railway
+            if "hopper.proxy.rlwy.net" in railway_db_url and not railway_db_url.startswith("mysql+pymysql://"):
+                if railway_db_url.startswith("mysql://"):
+                    railway_db_url = railway_db_url.replace("mysql://", "mysql+pymysql://", 1)
+                else:
+                    railway_db_url = "mysql+pymysql://" + railway_db_url
             return railway_db_url
         
         # Construir URL desde variables individuales de Railway
